@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { select, json, geoPath, geoMercator, } from "d3";
 import styled from "styled-components";
 
@@ -12,6 +12,19 @@ interface IResponseData {
 
 }
 
+const useFetchCovid = () => {
+    const [data, setData] = useState();
+    useEffect(() => {
+        const getData = async () => {
+            fetch('https://covid19.mathdro.id/api/deaths').then((res) => res.json()).then(res => setData(res))
+
+        }
+        getData()
+
+    }, [])
+    return data
+
+}
 const SVG = styled.svg`
     height: 100vh;
     width: 100vw;
@@ -24,9 +37,10 @@ const SVG = styled.svg`
     }
 `
 export const Map: React.FC<IMap> = (props) => {
+    const data = useFetchCovid()
     useEffect(() => {
         const svg = select('#map-container')
-        const projection = geoMercator().translate([750, 450]).scale(280);
+        const projection = geoMercator().translate([750, 450]).scale(200);
         const pathGenerator: any = geoPath().projection(projection);
 
         svg.append('path')
