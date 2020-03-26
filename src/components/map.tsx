@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react"
-import { select, json, geoPath, geoMercator, } from "d3";
+import { select, json, geoPath, geoMercator, scaleLinear, min, max } from "d3";
 import styled from "styled-components";
 
 import { feature } from "topojson"
-
+import _ from 'lodash'
+import { covidArray } from "../types";
 
 interface IMap {
 
@@ -13,7 +14,7 @@ interface IResponseData {
 }
 
 const useFetchCovid = () => {
-    const [data, setData] = useState();
+    const [data, setData] = useState<covidArray>([]);
     useEffect(() => {
         const getData = async () => {
             fetch('https://covid19.mathdro.id/api/deaths').then((res) => res.json()).then(res => setData(res))
@@ -22,7 +23,7 @@ const useFetchCovid = () => {
         getData()
 
     }, [])
-    return data
+    return [...data]
 
 }
 const SVG = styled.svg`
@@ -36,26 +37,56 @@ const SVG = styled.svg`
         fill: #ffff;
     }
 `
+
+const mergeData = (d1: any, d2: any) => {
+
+    const data = _(d2).keyBy('properties.name').merge(_.keyBy(d1, 'countryRegion')).values().value()
+    return data
+}
 export const Map: React.FC<IMap> = (props) => {
-    const data = useFetchCovid()
+    const covidData = useFetchCovid()
     useEffect(() => {
         const svg = select('#map-container')
         const projection = geoMercator().translate([750, 450]).scale(200);
         const pathGenerator: any = geoPath().projection(projection);
 
+        
+
         svg.append('path')
             .attr('class', 'sphere')
             .attr('d', pathGenerator({ type: 'Sphere' }))
 
-        json<IResponseData>('https://unpkg.com/world-atlas@1.1.4/world/110m.json')
+        if (covidData.length>0) {
+            debugger
+            const minVal =  covidData && min(covidData,(d,i)=>{
+                return d.confirmed
+            })
+            const maxVal = covidData && max(covidData, (d, i)=>{
+                return d.confirmed
+            })
+            const colorScale = scaleLinear()
+            //@ts-ignore
+            .domain([minVal, maxVal])
+            .range([ "#f1e4e7","#f08080", "#f57b7b", ]);
+
+
+            json<IResponseData>('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
             .then((data: any) => {
                 const countries: any = feature(data, data.objects.countries);
-                svg.selectAll('path').data(countries.features)
+                // merge covidData and countries.features 
+                const mergedData = mergeData(covidData, countries.features)
+                svg.selectAll('path').data(mergedData)
                     .enter().append('path')
                     .attr('class', 'country')
-                    .attr('d', pathGenerator);
+                    .attr('d', pathGenerator)
+                    .style('fill', ()=> '#ccc')
+                    .style('fill', (d: any, i: any) => {
+                        const confirmed = d.confirmed;
+                        return confirmed ? colorScale(confirmed): '#ccc'
+                    });
             })
-    }, [])
+        }
+    }, [covidData])
 
 
     return (
