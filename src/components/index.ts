@@ -1,5 +1,6 @@
-import {Map} from "./map"
-
+import { Map } from "./map"
+import { Tabs } from "./Tabs"
 export {
-    Map
+    Map,
+    Tabs
 }

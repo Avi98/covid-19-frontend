@@ -24,10 +24,10 @@ const useFetchCovid = () => {
             svg.append('path')
                 .attr('class', 'sphere')
                 .attr('d', pathGenerator({ type: 'Sphere' }))
+                .style('fill','#ffff')
 
 
             if (covidData.length > 0) {
-                debugger
                 const minVal = covidData && min(covidData, (d, i) => {
                     return d.confirmed
                 })
@@ -49,7 +49,6 @@ const useFetchCovid = () => {
                             .enter().append('path')
                             .attr('class', 'country')
                             .attr('d', pathGenerator)
-                            // .style('fill', () => '#f7f6f6')
                             .style('fill', (d: any, i: any) => {
                                 const confirmed = d.confirmed;
                                 return confirmed ? colorScale(confirmed) : '#eeeef'

@@ -3,6 +3,7 @@ import styled from "styled-components";
 export const Background = styled.div`
     position: absolute;
     z-index:-1;
+    top: 40px;
 `;
 export const SVG = styled.svg`
 height: 100vh;
